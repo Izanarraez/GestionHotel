@@ -81,8 +81,7 @@ FILE* apertCorr(FILE *fich){
     }
 }
 
-char* geneCodHab(){
-    int i;
+char* geneCodHab(int i){
     return ("HAB_%03d\n",++i);
 }
 
@@ -95,10 +94,13 @@ void main(){
     tRegCliente aRegCli[Max_clientes];
     tRegHabitacion aRegHab[5];
 
-    int iRegCli,iRecRegCli,tamRegCli,totCliReg;
-    int iRegHab;
+    int iRegCli,iRecRegCli,tamRegCli;
+    int iRegHab,iCodHab;
+    int totCliReg = 0;
 
-    FILE *altaCliFich;
+    char cDniCli[10];
+
+    FILE *altaCliFich, *bajaHcoClientes;
 
     do{
         int eMenIni;
@@ -132,14 +134,29 @@ void main(){
                             printf("Introduce Tipo Cliente:");
                             scanf("%s",aRegCli[iRegCli].tp_cli); //%i,&
 
-                            ++totCliReg;
-
-                            fwrite(aRegCli,sizeof(aRegCli),Max_clientes,altaCliFich); //"Nombre y Apellidos:%s,DNI:%s,Tipo Cliente:%s\n",aRegCli[iRecRegCli].nom_apell,aRegCli[iRecRegCli].dni,aRegCli[iRecRegCli].tp_cli
+                            fwrite(aRegCli,sizeof(int),Max_clientes,altaCliFich); //"Nombre y Apellidos:%s,DNI:%s,Tipo Cliente:%s\n",aRegCli[iRecRegCli].nom_apell,aRegCli[iRecRegCli].dni,aRegCli[iRecRegCli].tp_cli
                             fclose(altaCliFich);
 
                             iRegCli++;
                             break;
                         case 2: //Baja
+
+                            bajaHcoClientes = apertCorr(fopen("bajaHcoClientes.txt","a"));
+
+                            printf("Introduzca Dni para dar de baja");
+                            scanf("%s",cDniCli);
+
+                            tamRegCli = sizeof(aRegCli) / sizeof(aRegCli[0]);
+
+                            for(iRecRegCli = 0;iRecRegCli<sizeof(tamRegCli);iRecRegCli++){
+                                if(aRegCli[iRecRegCli].dni == cDniCli){
+                                    fprintf(bajaHcoClientes,"Nombre y apellidos:%s,Dni:%s,Tipo cliente:%s",aRegCli[iRecRegCli].nom_apell,aRegCli[iRecRegCli].nom_apell,strcpy(aRegCli[iRecRegCli].tp_cli);
+                                    aRegCli[iRecRegCli].dni = "\0";
+                                    aRegCli[iRecRegCli].nom_apell = "\0";
+                                    aRegCli[iRecRegCli].tp_cli = "\0";
+                                }
+                            }
+                            fclose(bajaHcoClientes);
                             break;
                         case 3: //Modificacion
                             break;
@@ -148,13 +165,14 @@ void main(){
                         case 5: //Listado General
                             tamRegCli = sizeof(aRegCli) / sizeof(aRegCli[0]);
 
+                            printf("\nNombre y Apellidos\tDNI\t\tCategorias\n");
                             for(iRecRegCli = 0;iRecRegCli<sizeof(tamRegCli);iRecRegCli++){
-                                if(strlen(aRegCli[iRecRegCli].dni) > 0){
-                                    printf("\nNombre y Apellidos\tDNI\t\tCategorias\n");
+                                if(strlen(aRegCli[iRecRegCli].nom_apell) > 0 && strlen(aRegCli[iRecRegCli].dni) > 0 && strlen(aRegCli[iRecRegCli].tp_cli) > 0){
                                     printf("\t%s\t\t%s\t%s\n",aRegCli[iRecRegCli].nom_apell,aRegCli[iRecRegCli].dni,aRegCli[iRecRegCli].tp_cli);
-                                    printf("Total: %i clientes registrados.\n",totCliReg);
+                                    totCliReg++;
                                 }
                             }
+                            printf("Total: %i clientes registrados.\n",totCliReg);
                             break;
                         case 6: //Listado por categorias
                             break;
@@ -165,7 +183,6 @@ void main(){
                             salMenGesCli = false;
                             break;
                     }
-
                 }while(salMenGesCli == true);
                 break;
             case 2: //Gestion Habitaciones
@@ -183,7 +200,7 @@ void main(){
 
                                 while (getchar() != '\n');
 
-                                strcpy(aRegHab[iRegHab].cdHab,geneCodHab());
+                                //strcpy(aRegHab[iRegHab].cdHab,geneCodHab());
 
                                 printf("Introduce tipo de habitacion:");
                                 scanf("%i",aRegHab[iRegHab].tipo);
@@ -198,6 +215,8 @@ void main(){
                             }
                             break;
                         case 2: //Baja Habitacion
+                            //iCodHab = 0;
+                            //printf(geneCodHab(++iCodHab));
                             break;
                         case 3: //Modificacion Habitacion
                             break;
