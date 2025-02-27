@@ -1,3 +1,12 @@
+/*
+Asignatura: Metodología de la programación Curso: 1
+Tarea que realiza el programa: Gestión de clientes, habitaciones y reservas de un hotel
+Alumno 1:< Arraez Pulido Izan>
+Alumno 2:<>
+Grupo de laboratorio:<1L>
+Fecha:<>
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -19,10 +28,26 @@ typedef struct{
 const int Max_clientes = 100; /************************************Consultar lo del define*******************************/
 const int Max_habitaciones = 50;
 
+/***************************************************************************/
+/*Subprograma:Barra Separadora*/
+/*Tipo:Procedimiento(función tipo void)*/
+/*Parametros de Entrada: ninguno*/
+/*parametros de salida: nunguno*/
+/*Objetivo: Mostrar la separacion de la cabecera con el menu*/
+/***************************************************************************/
+
 void barraSeparadora(){
 
     printf("-----------------------------------\n");
 }
+
+/***************************************************************************/
+/*Subprograma:Menu de Inicio*/
+/*Tipo:Procedimiento(función tipo void)*/
+/*Parametros de Entrada: ninguno*/
+/*parametros de salida: nunguno*/
+/*Objetivo: Mostrar el menu de inicio*/
+/***************************************************************************/
 
 void menuInicio(){
     printf("\nGestion de Clientes\n");
@@ -35,6 +60,14 @@ void menuInicio(){
     printf("   0.- Salir\n");
     printf("Elija opcion:");
 }
+
+/***************************************************************************/
+/*Subprograma:Menu de Gestion de Clientes*/
+/*Tipo:Procedimiento(función tipo void)*/
+/*Parametros de Entrada: ninguno*/
+/*parametros de salida: nunguno*/
+/*Objetivo: Mostrar el menu de Gestion de Clientes*/
+/***************************************************************************/
 
 void menuGestCli(){
     printf("\nGestion de Clientes\n");
@@ -49,6 +82,14 @@ void menuGestCli(){
     printf("Elija opcion:");
 }
 
+/***************************************************************************/
+/*Subprograma:Menu de Gestion de Habitaciones*/
+/*Tipo:Procedimiento(función tipo void)*/
+/*Parametros de Entrada: ninguno*/
+/*parametros de salida: nunguno*/
+/*Objetivo: Mostrar el menu Gestion de Habitaciones*/
+/***************************************************************************/
+
 void menuGestHab(){
     printf("\nGestion de Habitaciones\n");
     barraSeparadora();
@@ -61,6 +102,14 @@ void menuGestHab(){
     printf("Elija opcion:");
 }
 
+/***************************************************************************/
+/*Subprograma:Menu de Gestion de Reservas*/
+/*Tipo:Procedimiento(función tipo void)*/
+/*Parametros de Entrada: ninguno*/
+/*parametros de salida: nunguno*/
+/*Objetivo: Mostrar el menu de Gestion de Reservas*/
+/***************************************************************************/
+
 void menuGestRes(){
     printf("\nGestion de Reservas\n");
     barraSeparadora();
@@ -72,20 +121,41 @@ void menuGestRes(){
     printf("Elija opcion:");
 }
 
+/***************************************************************************/
+/*Subprograma:Apertira correcta de un fichero*/
+/*Tipo:Procedimiento(función tipo FILE*)*/
+/*Parametros de Entrada: File* */
+/*parametros de salida: File* */
+/*Objetivo: Compribar si el fichero se abre correctamente*/
+/***************************************************************************/
+
 FILE* apertCorr(FILE *fich){
     if(fich != NULL){
         return fich;
     }
     else{
-        printf("El fichero no se a habierto correctamente");
+        printf("El fichero no se a habierto correctamente o no existe");
     }
 }
+
+/***************************************************************************/
+/*Subprograma:Generador de codigo de Habitacion*/
+/*Tipo:Procedimiento(función tipo char*)*/
+/*Parametros de Entrada: int i */
+/*parametros de salida: char[] */
+/*Objetivo: Generar el codigo de Habitacion de forma automatica*/
+/***************************************************************************/
 
 char* geneCodHab(int i){
     return ("HAB_%03d\n",++i);
 }
 
+
+
 void main(){
+
+    printf("¡Bienvenido a la aplicación GEST_HOTEL!");
+
     bool salMenIni = true;
     bool salMenGesCli = true;
     bool salMenGesHab = true;
@@ -100,7 +170,12 @@ void main(){
 
     char cDniCli[10];
 
-    FILE *altaCliFich, *bajaHcoClientes;
+    FILE *cont_Clientes, *cont_Habitaciones, *cont_Reservas,cont_hcoHabitaciones, *totalGlobalHotel; //.dat
+    FILE *habitacionesNuevas, *bajaHcoClientes, *bajaHcoHabitaciones, *bajaHcoReservas; //.txt
+
+    /*cont_Clientes = apertCorr(fopen("Cientes.dat","rb"));
+    cont_Habitaciones = apertCorr(fopen("Habitaciones.dat","rb"));
+    cont_Reservas = apertCorr(fopen("Reservas.dat","rb"));*/
 
     do{
         int eMenIni;
@@ -119,9 +194,9 @@ void main(){
                     totCliReg = 0;
 
                     switch(eMenCli){
-                        case 1: //Alta
+                        case 1: //Alta (bien)
 
-                            altaCliFich = apertCorr(fopen("Clientes.dat","ab"));
+                            //cont_Clientes = apertCorr(fopen("Clientes.dat","ab"));
 
                             while (getchar() != '\n');
 
@@ -134,8 +209,8 @@ void main(){
                             printf("Introduce Tipo Cliente:");
                             scanf("%s",aRegCli[iRegCli].tp_cli); //%i,&
 
-                            fwrite(aRegCli,sizeof(int),Max_clientes,altaCliFich); //"Nombre y Apellidos:%s,DNI:%s,Tipo Cliente:%s\n",aRegCli[iRecRegCli].nom_apell,aRegCli[iRecRegCli].dni,aRegCli[iRecRegCli].tp_cli
-                            fclose(altaCliFich);
+                            //fwrite(aRegCli,sizeof(int),Max_clientes,altaCliFich); //"Nombre y Apellidos:%s,DNI:%s,Tipo Cliente:%s\n",aRegCli[iRecRegCli].nom_apell,aRegCli[iRecRegCli].dni,aRegCli[iRecRegCli].tp_cli
+                            //fclose(altaCliFich);
 
                             iRegCli++;
                             break;
@@ -150,19 +225,50 @@ void main(){
 
                             for(iRecRegCli = 0;iRecRegCli<sizeof(tamRegCli);iRecRegCli++){
                                 if(aRegCli[iRecRegCli].dni == cDniCli){
-                                    fprintf(bajaHcoClientes,"Nombre y apellidos:%s,Dni:%s,Tipo cliente:%s",aRegCli[iRecRegCli].nom_apell,aRegCli[iRecRegCli].nom_apell,strcpy(aRegCli[iRecRegCli].tp_cli);
-                                    aRegCli[iRecRegCli].dni = "\0";
-                                    aRegCli[iRecRegCli].nom_apell = "\0";
-                                    aRegCli[iRecRegCli].tp_cli = "\0";
+                                    fprintf(bajaHcoClientes,"Nombre y apellidos:%s,Dni:%s,Tipo cliente:%s",aRegCli[iRecRegCli].nom_apell,aRegCli[iRecRegCli].nom_apell,aRegCli[iRecRegCli].tp_cli);
+                                    strcpy(aRegCli[iRecRegCli].dni,"");
+                                    strcpy(aRegCli[iRecRegCli].nom_apell,"");
+                                    strcpy(aRegCli[iRecRegCli].tp_cli,"");
                                 }
                             }
                             fclose(bajaHcoClientes);
                             break;
-                        case 3: //Modificacion
+                        case 3: //Modificacion (bien)
+                            printf("\nIntroduzca Dni para modificar un cliente");
+                            scanf("%s",cDniCli);
+
+                            tamRegCli = sizeof(aRegCli) / sizeof(aRegCli[0]);
+
+                            for(iRecRegCli = 0;iRecRegCli<sizeof(tamRegCli);iRecRegCli++){
+                                if(strcmp(aRegCli[iRecRegCli].dni, cDniCli) == 0){
+
+                                    while (getchar() != '\n');
+
+                                    printf("Introduzca nombre:");
+                                    scanf("%s",aRegCli[iRecRegCli].nom_apell);
+
+                                    printf("Introduce Tipo Cliente:");
+                                    scanf("%s",aRegCli[iRecRegCli].tp_cli);
+                                }
+                            }
                             break;
                         case 4: //Consulta
+
+                            printf("Introduzca Dni a colsultar");
+                            scanf("%s",cDniCli);
+
+                            tamRegCli = sizeof(aRegCli) / sizeof(aRegCli[0]);
+
+                            for(iRecRegCli = 0;iRecRegCli<sizeof(tamRegCli);iRecRegCli++){
+                                if(strcmp(aRegCli[iRecRegCli].dni, cDniCli) == 0){
+                                    printf("Nombre y Apellidos:%s\n",aRegCli[iRecRegCli].nom_apell);
+                                    printf("DNI:%s\n",aRegCli[iRecRegCli].dni);
+                                    printf("Pipo de Cliente:%s\n",aRegCli[iRecRegCli].tp_cli);
+                                    printf("Habitaciones Reservadas:%d\n",aRegCli[iRecRegCli].rs_hab); //Falta
+                                }
+                            }
                             break;
-                        case 5: //Listado General
+                        case 5: //Listado General (bien)
                             tamRegCli = sizeof(aRegCli) / sizeof(aRegCli[0]);
 
                             printf("\nNombre y Apellidos\tDNI\t\tCategorias\n");
