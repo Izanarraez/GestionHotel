@@ -148,43 +148,37 @@ FILE* lecCorr(char *fich){
     return open;
 }
 
-/***************************************************************************/
-/*Subprograma:Generador de codigo de Habitacion*/
-/*Tipo:Procedimiento(función tipo char*)*/
-/*Parametros de Entrada: int i */
-/*parametros de salida: char[] */
-/*Objetivo: Generar el codigo de Habitacion de forma automatica*/
-/***************************************************************************/
-
-char* geneCodHab(char *cadena,int i){
-    ++i;
-    return sprintf(cadena, "HAB_%03d", i);
-}
-
 void impArrCli(tRegCliente *regCli){
     int i = 0;
     int tam = sizeof(regCli)/ sizeof(regCli[0]);
     for(i;i < sizeof(tam);i++){
-        if(regCli[i].nom_apell != "" && regCli[i].dni != "" && regCli[i].tp_cli != ""){
+        if(regCli[i].nom_apell != "\0" && regCli[i].dni != "\0" && regCli[i].tp_cli != "\0"){
             printf("%s,%s,%s\n",regCli[i].dni,regCli[i].nom_apell,regCli[i].tp_cli);
         }
     }
 }
 
+/***************************************************************************/
+/*Subprograma:Rellenar array cliente*/
+/*Tipo:Procedimiento(función tipo tRegCliente *)*/
+/*Parametros de Entrada: tRegCliente *arr */
+/*parametros de salida: arr */
+/*Objetivo: Inicializar el array de cliente*/
+/***************************************************************************/
 tRegCliente *rellArrCli(tRegCliente *arr){
     int i = 0;
     int j = 0;
     //int tam = sizeof(arr) / sizeof(arr[0]);
     for(i;i<Max_clientes;i++){
-        strcpy(arr[i].nom_apell,"");
-        strcpy(arr[i].dni,"");
-        strcpy(arr[i].tp_cli,"");
+        strcpy(arr[i].nom_apell,"\0");
+        strcpy(arr[i].dni,"\0");
+        strcpy(arr[i].tp_cli,"\0");
 
         int tam2 = sizeof(arr[i].rs_hab) / sizeof(arr[i].rs_hab[0]);
 
         for(j;j<5;j++){
-            strcpy(arr[i].rs_hab[j].cdHab,"");
-            strcpy(arr[i].rs_hab[j].tipo,"");
+            strcpy(arr[i].rs_hab[j].cdHab,"\0");
+            strcpy(arr[i].rs_hab[j].tipo,"\0");
             arr[i].rs_hab[j].precio = 0.0;
         }
     }
@@ -203,19 +197,19 @@ void main(){
 
     printf("¡Bienvenido a la aplicacion GEST_HOTEL!");
 
-    bool salMenIni = true;
-    bool salMenGesCli = true;
-    bool salMenGesHab = true;
-    bool salMenGesRes = true;
+    bool salMenIni = true, salMenGesCli = true, salMenGesHab = true, salMenGesRes = true;
+    bool habNoEnc, habNoResv;
 
     tRegCliente aRegCli[Max_clientes];
     tRegHabitacion aRegHab[Max_habitaciones];
+    char aRegRes[Max_habitaciones][31];
 
     size_t tamRegCli = 0;
     size_t eleEscriRegCli = 0;
 
     int iRegCli = 0,iRecRegCli = 0,totCliReg = 0,totCliCat;
-    int iRegHab = 0,iCodHab = 1,tamRegHab = 0,totHabReg;
+    int iRegHab = 0,iRecRegHab = 0,iRecRegHabCli,iCodHab = 1,tamRegHab = 0,totHabReg;
+    int diaRes = 0,iRecRegResHab = 0, iRecRegResDia = 0;
 
     char cDniCli[10], cCodHab[10], cTipoCli[12];
 
@@ -263,9 +257,9 @@ void main(){
 
                             for(iRecRegCli = 0;iRecRegCli<Max_clientes;iRecRegCli++){
                                 if(strcmp(aRegCli[iRecRegCli].dni,cDniCli) == 0){
-                                    strcpy(aRegCli[iRecRegCli].nom_apell,"");
-                                    strcpy(aRegCli[iRecRegCli].dni,"");
-                                    strcpy(aRegCli[iRecRegCli].tp_cli,"");
+                                    strcpy(aRegCli[iRecRegCli].nom_apell,"\0");
+                                    strcpy(aRegCli[iRecRegCli].dni,"\0");
+                                    strcpy(aRegCli[iRecRegCli].tp_cli,"\0");
                                 }
                             }
                             //fclose(bajaHcoClientes);
@@ -357,8 +351,6 @@ void main(){
 
                             while (getchar() != '\n');
 
-                            //geneCodHab(aRegHab[iRegHab].cdHab,iCodHab);
-
                             sprintf(aRegHab[iRegHab].cdHab, "HAB_%03d", iCodHab);
 
                             printf("Introduce tipo de habitacion:");
@@ -371,38 +363,84 @@ void main(){
                             iRegHab++;
                             break;
                         case 2: //Baja Habitacion
-                            //iCodHab = 0;
-                            //printf(geneCodHab(++iCodHab));
+
+                            habNoEnc = true;
+                            habNoResv = true;
+
+                            printf("Introduzca codigo de habitacion para dar de baja");
+                            scanf("%s",cCodHab);
+
+                             for(iRecRegCli = 0;iRecRegCli<Max_clientes;iRecRegCli++){
+                                for(iRecRegHabCli = 0;iRecRegHabCli < 5;iRecRegHabCli++){
+                                    if(strcmp(aRegCli[iRecRegCli].rs_hab[iRecRegHabCli].cdHab, cCodHab) != 0){
+                                        for(iRecRegHab = 0;iRecRegHab<Max_habitaciones;iRecRegHab++){
+                                            if(strcmp(aRegHab[iRecRegHab].cdHab,cCodHab) == 0){
+                                                strcpy(aRegHab[iRecRegHab].cdHab,"\0");
+                                                strcpy(aRegHab[iRecRegHab].tipo,"\0");
+                                                aRegHab[iRecRegHab].precio = 0.0;
+                                                habNoEnc = false;
+                                            }
+                                        }
+                                        habNoResv = false;
+                                    }
+                                }
+                             }
+
+                            if(habNoEnc == true){
+                                printf("Error, La habitacion no figura en nuestros registros");
+                            }
+                            if(habNoResv == true){
+                                printf("Error, no se puede dar de baja la habitacion %s ya que tiene reservas asociadas",cCodHab);
+                            }
 
                             break;
                         case 3: //Modificacion Habitacion
+
+                            habNoEnc = true;
+
+                            printf("Introduzca codigo de habitacion para ser modificado");
+                            scanf("%s",cCodHab);
+
+                            for(iRecRegHab = 0;iRecRegHab < Max_habitaciones;iRecRegHab++){
+                                if(strcmp(aRegHab[iRecRegHab].cdHab, cCodHab) == 0){
+                                    while (getchar() != '\n');
+
+                                    printf("Introduzca tipo:");
+                                    scanf("%s",aRegHab[iRecRegHab].tipo);
+
+                                    printf("Introduce precio:");
+                                    scanf("%f",&aRegHab[iRecRegHab].precio);
+
+                                    habNoEnc = false;
+                                }
+                            }
+
+                            if(habNoEnc == true){
+                                printf("Error, La habitacion no figura en nuestros registros");
+                            }
                             break;
                         case 4: //Consulta Habitacion
 
-                            printf("Introduzca Dni a colsultar");
+                            printf("Introduzca codigo de habitacion a colsultar");
                             scanf("%s",cCodHab);
 
-                            tamRegHab = sizeof(aRegHab) / sizeof(aRegHab[0]);
-
-                            for(iRegHab = 0;aRegHab < Max_habitaciones;iRegHab++){
-                                if(strcmp(aRegHab[iRegHab].cdHab, cCodHab) == 0){
-                                    printf("Codigo Habitacion:%s\n",aRegHab[iRegHab].cdHab);
-                                    printf("Tipo:%s\n",aRegHab[iRegHab].tipo);
-                                    printf("Precio:%s\n",aRegHab[iRegHab].precio);
+                            for(iRecRegHab = 0;iRecRegHab < Max_habitaciones;iRecRegHab++){
+                                if(strcmp(aRegHab[iRecRegHab].cdHab, cCodHab) == 0){
+                                    printf("Codigo Habitacion:%s\n",aRegHab[iRecRegHab].cdHab);
+                                    printf("Tipo:%s\n",aRegHab[iRecRegHab].tipo);
+                                    printf("Precio:%f\n",&aRegHab[iRecRegHab].precio);
                                     break;
                                 }
                             }
-                            printf("Error codigo no existe");
                             break;
                         case 5: //Listado General de Habitacion
 
-                            //tamRegHab = sizeof(aRegHab) / sizeof(aRegHab[0]);
-
                             totHabReg = 0;
+
                             printf("\nNombre y Apellidos\tDNI\t\tCategorias\n");
-                            for(iRegHab = 0;iRegHab < Max_habitaciones;iRegHab++){
-                                if(strlen(aRegHab[iRegHab].cdHab) > 0 && strlen(aRegHab[iRegHab].tipo) > 0 && aRegHab[iRegHab].precio > 0){
-                                    printf("\t%s\t\t%s\t%f\n",aRegHab[iRegHab].cdHab,aRegHab[iRegHab].tipo,aRegHab[iRegHab].precio);
+                            for(iRecRegHab = 0;iRecRegHab < Max_habitaciones;iRecRegHab++){
+                                if(strlen(aRegHab[iRecRegHab].cdHab) > 0 && strlen(aRegHab[iRecRegHab].tipo) > 0 && aRegHab[iRecRegHab].precio > 0){
+                                    printf("\t%s\t\t%s\t%f\n",aRegHab[iRecRegHab].cdHab,aRegHab[iRecRegHab].tipo,aRegHab[iRecRegHab].precio);
                                     totHabReg++;
                                 }
                             }
@@ -419,6 +457,55 @@ void main(){
                 }while(salMenGesHab == true);
                 break;
             case 3: //Gestion Reservas
+                do{
+                    int eMenRes;
+
+                    menuGestRes();
+                    scanf("%i",&eMenRes);
+
+                    switch(eMenResv){
+                        case 1: //realizar reserva
+                            printf("Introduzca Dni a colsultar:");
+                            scanf("%s",cDniCli);
+
+                            printf("Introduzca codigo de habitacion");
+                            scanf("%s",cCodHab);
+
+                            printf("Introduzca dia a reservar");
+                            scanf("%i",&diaRes);
+
+                            for(iRecRegCli = 0;iRecRegCli<Max_clientes;iRecRegCli++){
+                                for(iRecRegHabCli = 0;iRecRegHabCli < 5;iRecRegHabCli++){
+                                    if(strcmp(aRegCli[iRecRegCli].rs_hab[iRecRegHabCli].cdHab, cCodHab) != 0){
+                                        for(iRecRegHab = 0;iRecRegHab<Max_habitaciones;iRecRegHab++){
+                                            strcpy(aRegCli[iRecRegCli].rs_hab[iRecRegHabCli].cdHab,cCodHab);
+                                            strcpy(aRegCli[iRecRegCli].rs_hab[iRecRegHabCli].tipo,aRegHab[iRecRegHab].tipo);
+                                            aRegCli[iRecRegCli].rs_hab[iRecRegHabCli].precio = aRegHab[iRecRegHab].precio;
+                                        }
+                                    }
+                                }
+                             }
+
+                             for(iRecRegResHab = 0;iRecRegResHab < Max_habitaciones;iRecRegResHab++){
+                                for(iRecRegResDia = 0;iRecRegResDia < 31;iRecRegResDia++){
+
+                                }
+                             }
+                            break;
+                        case 2: //cancelar reserva
+                            break;
+                        case 3: // consultar reserva de un cliente
+                            break;
+                        case 4: //Listado general de reservas
+                            break;
+                        case 0:
+                            salMenGesRes = false;
+                            break;
+                        default:
+                            salMenGesRes = false;
+                            break;
+                    }
+                }while(salMenGesRes == true);
                 break;
             case 4: //Informes Economicos
                 break;
