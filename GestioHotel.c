@@ -157,6 +157,7 @@ FILE* lecCorr(char *fich){
 /***************************************************************************/
 
 char* geneCodHab(char *cadena,int i){
+    ++i;
     return sprintf(cadena, "HAB_%03d", i);
 }
 
@@ -164,14 +165,43 @@ void impArrCli(tRegCliente *regCli){
     int i = 0;
     int tam = sizeof(regCli)/ sizeof(regCli[0]);
     for(i;i < sizeof(tam);i++){
-        printf("%s,%s,%s",regCli[i].dni,regCli[i].nom_apell,regCli[i].tp_cli);
+        if(regCli[i].nom_apell != "" && regCli[i].dni != "" && regCli[i].tp_cli != ""){
+            printf("%s,%s,%s\n",regCli[i].dni,regCli[i].nom_apell,regCli[i].tp_cli);
+        }
     }
+}
+
+tRegCliente *rellArrCli(tRegCliente *arr){
+    int i = 0;
+    int j = 0;
+    //int tam = sizeof(arr) / sizeof(arr[0]);
+    for(i;i<Max_clientes;i++){
+        strcpy(arr[i].nom_apell,"");
+        strcpy(arr[i].dni,"");
+        strcpy(arr[i].tp_cli,"");
+
+        int tam2 = sizeof(arr[i].rs_hab) / sizeof(arr[i].rs_hab[0]);
+
+        for(j;j<5;j++){
+            strcpy(arr[i].rs_hab[j].cdHab,"");
+            strcpy(arr[i].rs_hab[j].tipo,"");
+            arr[i].rs_hab[j].precio = 0.0;
+        }
+    }
+    return arr;
 }
 //,FILE *habitaciones, FILE* reservas
 
+void errEscFich(size_t eleEsc,size_t numEle){
+    if (eleEsc != numEle) {
+        perror("Error al escribir en el archivo");
+        return 1;
+    }
+}
 void main(){
 
-    printf("¡Bienvenido a la aplicación GEST_HOTEL!");
+
+    printf("¡Bienvenido a la aplicacion GEST_HOTEL!");
 
     bool salMenIni = true;
     bool salMenGesCli = true;
@@ -181,30 +211,24 @@ void main(){
     tRegCliente aRegCli[Max_clientes];
     tRegHabitacion aRegHab[Max_habitaciones];
 
-    int iRegCli = 0,iRecRegCli,tamRegCli;
-    int iRegHab = 0,iCodHab,tamRegHab;
-    int totCliReg = 0;
-    int totCliCat = 0;
-    int totHabReg = 0;
+    size_t tamRegCli = 0;
+    size_t eleEscriRegCli = 0;
+
+    int iRegCli = 0,iRecRegCli = 0,totCliReg = 0,totCliCat;
+    int iRegHab = 0,iCodHab = 1,tamRegHab = 0,totHabReg;
 
     char cDniCli[10], cCodHab[10], cTipoCli[12];
 
     FILE *cont_Clientes, *cont_Habitaciones, *cont_Reservas,cont_hcoHabitaciones, *totalGlobalHotel; //.dat
     FILE *habitacionesNuevas, *bajaHcoClientes, *bajaHcoHabitaciones, *bajaHcoReservas; //.txt
 
-    /*cont_Clientes = apertCorr(fopen("Cientes.dat","rb"));
-    cont_Habitaciones = apertCorr(fopen("Habitaciones.dat","rb"));
-    cont_Reservas = apertCorr(fopen("Reservas.dat","rb"));*/
+    memcpy(aRegCli,rellArrCli(aRegCli),sizeof(aRegCli));
 
     do{
         int eMenIni;
 
         menuInicio();
         scanf("%i",&eMenIni);
-
-        cont_Clientes = lecCorr("Clientes.dat");
-        fread(aRegCli,sizeof(tRegCliente),100,cont_Clientes);
-        fclose(cont_Clientes);
 
         switch(eMenIni){
             case 1: //Gestion Clientes
@@ -217,8 +241,6 @@ void main(){
                     switch(eMenCli){
                         case 1: //Alta (bien)
 
-                            cont_Clientes = apertCorr("Clientes.dat");
-
                             while (getchar() != '\n');
 
                             printf("Introduce nombre:");
@@ -228,13 +250,7 @@ void main(){
                             scanf("%s",aRegCli[iRegCli].dni);
 
                             printf("Introduce Tipo Cliente:");
-                            scanf("%s",aRegCli[iRegCli].tp_cli); //%i,&
-
-
-                            fwrite(&aRegCli[iRegCli],size(tRegCliente),100,cont_Clientes);
-                            fclose(cont_Clientes);
-
-                            impArrCli(aRegCli);
+                            scanf("%s",aRegCli[iRegCli].tp_cli);
 
                             iRegCli++;
                             break;
@@ -245,12 +261,10 @@ void main(){
                             printf("Introduzca Dni para dar de baja");
                             scanf("%s",cDniCli);
 
-                            tamRegCli = sizeof(aRegCli) / sizeof(aRegCli[0]);
-
-                            for(iRecRegCli = 0;iRecRegCli<sizeof(tamRegCli);iRecRegCli++){
+                            for(iRecRegCli = 0;iRecRegCli<Max_clientes;iRecRegCli++){
                                 if(strcmp(aRegCli[iRecRegCli].dni,cDniCli) == 0){
-                                    strcpy(aRegCli[iRecRegCli].dni,"");
                                     strcpy(aRegCli[iRecRegCli].nom_apell,"");
+                                    strcpy(aRegCli[iRecRegCli].dni,"");
                                     strcpy(aRegCli[iRecRegCli].tp_cli,"");
                                 }
                             }
@@ -260,9 +274,7 @@ void main(){
                             printf("\nIntroduzca Dni para modificar un cliente");
                             scanf("%s",cDniCli);
 
-                            tamRegCli = sizeof(aRegCli) / sizeof(aRegCli[0]);
-
-                            for(iRecRegCli = 0;iRecRegCli<sizeof(tamRegCli);iRecRegCli++){
+                            for(iRecRegCli = 0;iRecRegCli<Max_clientes;iRecRegCli++){
                                 if(strcmp(aRegCli[iRecRegCli].dni, cDniCli) == 0){
 
                                     while (getchar() != '\n');
@@ -280,9 +292,9 @@ void main(){
                             printf("Introduzca Dni a colsultar:");
                             scanf("%s",cDniCli);
 
-                            tamRegCli = sizeof(aRegCli) / sizeof(aRegCli[0]);
+                            //tamRegCli = sizeof(aRegCli) / sizeof(aRegCli[0]);
 
-                            for(iRecRegCli = 0;iRecRegCli<sizeof(tamRegCli);iRecRegCli++){
+                            for(iRecRegCli = 0;iRecRegCli<Max_clientes;iRecRegCli++){
                                 if(strcmp(aRegCli[iRecRegCli].dni, cDniCli) == 0){
                                     printf("Nombre y Apellidos:%s\n",aRegCli[iRecRegCli].nom_apell);
                                     printf("DNI:%s\n",aRegCli[iRecRegCli].dni);
@@ -294,12 +306,13 @@ void main(){
                         case 5: //Listado General (bien)
                             printf("\nNombre y Apellidos\tDNI\t\tCategorias\n");
 
-                            tamRegCli = sizeof(aRegCli) / sizeof(aRegCli[0]);
-                            printf("%i",tamRegCli);
-                            for(iRecRegCli = 0;iRecRegCli<sizeof(tamRegCli);iRecRegCli++){
+                            totCliReg = 0;
+
+                            for(iRecRegCli = 0;iRecRegCli<Max_clientes;iRecRegCli++){
                                 if(strlen(aRegCli[iRecRegCli].nom_apell) > 0 && strlen(aRegCli[iRecRegCli].dni) > 0 && strlen(aRegCli[iRecRegCli].tp_cli) > 0){
                                     printf("\t%s\t\t%s\t\t%s\n",aRegCli[iRecRegCli].nom_apell,aRegCli[iRecRegCli].dni,aRegCli[iRecRegCli].tp_cli);
                                     totCliReg++;
+
                                 }
                             }
 
@@ -309,12 +322,13 @@ void main(){
                             printf("Introduzca Categoria a consultar:");
                             scanf("%s",cTipoCli);
 
-                            tamRegCli = sizeof(aRegCli) / sizeof(aRegCli[0]);
+                            //tamRegCli = sizeof(aRegCli) / sizeof(aRegCli[0]);
 
+                            totCliCat = 0;
                             printf("LISTADO DE CLIENTES - Categoria %s\n",cTipoCli);
                             barraSeparadora();
                             printf("   Nombre y Apellidos\tDNI\n");
-                            for(iRecRegCli = 0;iRecRegCli<sizeof(tamRegCli);iRecRegCli++){
+                            for(iRecRegCli = 0;iRecRegCli<Max_clientes;iRecRegCli++){
                                 if(strcmp(aRegCli[iRecRegCli].tp_cli, cTipoCli) == 0){
                                     printf("%s\t%s\n",aRegCli[iRecRegCli].nom_apell,aRegCli[iRecRegCli].dni);
                                     totCliCat++;
@@ -338,22 +352,20 @@ void main(){
                     menuGestHab();
                     scanf("%i",&eMenHab);
 
-                    iCodHab = 0;
-
                     switch(eMenHab){
                         case 1: //Alta Habitacion
 
-                            iCodHab = 1;
-
                             while (getchar() != '\n');
 
-                            geneCodHab(aRegHab[iRegHab].cdHab,iCodHab);
+                            //geneCodHab(aRegHab[iRegHab].cdHab,iCodHab);
+
+                            sprintf(aRegHab[iRegHab].cdHab, "HAB_%03d", iCodHab);
 
                             printf("Introduce tipo de habitacion:");
                             scanf("%s",aRegHab[iRegHab].tipo);
 
                             printf("Introduce el precio de la habitacion:");
-                            //scanf("%f",aRegHab[iRegHab].precio);
+                            scanf("%f",&aRegHab[iRegHab].precio);
 
                             iCodHab++;
                             iRegHab++;
@@ -372,7 +384,7 @@ void main(){
 
                             tamRegHab = sizeof(aRegHab) / sizeof(aRegHab[0]);
 
-                            for(iRegHab = 0;aRegHab < sizeof(tamRegHab);iRegHab++){
+                            for(iRegHab = 0;aRegHab < Max_habitaciones;iRegHab++){
                                 if(strcmp(aRegHab[iRegHab].cdHab, cCodHab) == 0){
                                     printf("Codigo Habitacion:%s\n",aRegHab[iRegHab].cdHab);
                                     printf("Tipo:%s\n",aRegHab[iRegHab].tipo);
@@ -384,10 +396,11 @@ void main(){
                             break;
                         case 5: //Listado General de Habitacion
 
-                            tamRegHab = sizeof(aRegHab) / sizeof(aRegHab[0]);
+                            //tamRegHab = sizeof(aRegHab) / sizeof(aRegHab[0]);
 
+                            totHabReg = 0;
                             printf("\nNombre y Apellidos\tDNI\t\tCategorias\n");
-                            for(iRegHab = 0;iRegHab < sizeof(tamRegHab);iRegHab++){
+                            for(iRegHab = 0;iRegHab < Max_habitaciones;iRegHab++){
                                 if(strlen(aRegHab[iRegHab].cdHab) > 0 && strlen(aRegHab[iRegHab].tipo) > 0 && aRegHab[iRegHab].precio > 0){
                                     printf("\t%s\t\t%s\t%f\n",aRegHab[iRegHab].cdHab,aRegHab[iRegHab].tipo,aRegHab[iRegHab].precio);
                                     totHabReg++;
@@ -412,6 +425,15 @@ void main(){
             case 5: //Importar Habitaciones desde ficheros
                 break;
             case 0: //Salida de Menu de inicio
+
+                cont_Clientes = apertCorr("Clientes.dat");
+                tamRegCli = sizeof(aRegCli) / sizeof(aRegCli[0]);
+                eleEscriRegCli = fwrite(aRegCli,sizeof(tRegCliente),100,cont_Clientes);
+                errEscFich(eleEscriRegCli,tamRegCli);
+                fclose(cont_Clientes);
+
+                impArrCli(aRegCli);
+
                 printf("\n¡Gracias por utilizar la aplicacion GEST-HOTEL!\n");
                 salMenIni = false;
                 break;
