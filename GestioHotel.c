@@ -134,7 +134,6 @@ FILE* apertCorr(char *fich){
     FILE *open = fopen(fich,"ab");
     if(open == NULL){
         printf("El fichero no se a habierto correctamente o no existe");
-        return 1;
     }
     return open;
 }
@@ -143,17 +142,20 @@ FILE* lecCorr(char *fich){
     FILE *open = fopen(fich,"rb");
     if(open == NULL){
         printf("El fichero no se a leido correctamente o no existe, creando fichero");
-        return apertCorr(fich);
     }
     return open;
 }
 
 void impArrCli(tRegCliente *regCli){
     int i = 0;
+    int j = 0;
     int tam = sizeof(regCli)/ sizeof(regCli[0]);
     for(i;i < sizeof(tam);i++){
         if(regCli[i].nom_apell != "\0" && regCli[i].dni != "\0" && regCli[i].tp_cli != "\0"){
             printf("%s,%s,%s\n",regCli[i].dni,regCli[i].nom_apell,regCli[i].tp_cli);
+            for(j;j<5;j++){
+                printf("%s,%s,%f\n",regCli[i].rs_hab[j].cdHab,regCli[i].rs_hab[j].tipo,&regCli[i].rs_hab[j].precio);
+            }
         }
     }
 }
@@ -198,7 +200,7 @@ void main(){
     printf("¡Bienvenido a la aplicacion GEST_HOTEL!");
 
     bool salMenIni = true, salMenGesCli = true, salMenGesHab = true, salMenGesRes = true;
-    bool habNoEnc, habNoResv;
+    bool habNoEnc, habNoResv, resInt;
 
     tRegCliente aRegCli[Max_clientes];
     tRegHabitacion aRegHab[Max_habitaciones];
@@ -207,9 +209,9 @@ void main(){
     size_t tamRegCli = 0;
     size_t eleEscriRegCli = 0;
 
-    int iRegCli = 0,iRecRegCli = 0,totCliReg = 0,totCliCat;
+    int iRegCli = 0,iRecRegCli = 0,totCliReg = 0,totCliCat,totResCli;
     int iRegHab = 0,iRecRegHab = 0,iRecRegHabCli,iCodHab = 1,tamRegHab = 0,totHabReg;
-    int diaRes = 0,iRecRegResHab = 0, iRecRegResDia = 0;
+    int iDiaRes = 0, diaRes,iRecRegResHab = 0, iRecRegResDia = 0;
 
     char cDniCli[10], cCodHab[10], cTipoCli[12];
 
@@ -217,6 +219,10 @@ void main(){
     FILE *habitacionesNuevas, *bajaHcoClientes, *bajaHcoHabitaciones, *bajaHcoReservas; //.txt
 
     memcpy(aRegCli,rellArrCli(aRegCli),sizeof(aRegCli));
+
+    cont_Clientes = lecCorr("Clientes.dat");
+    fread(aRegCli,sizeof(tRegCliente),Max_clientes,cont_Clientes);
+    fclose(cont_Clientes);
 
     do{
         int eMenIni;
@@ -463,40 +469,63 @@ void main(){
                     menuGestRes();
                     scanf("%i",&eMenRes);
 
-                    switch(eMenResv){
+                    switch(eMenRes){
                         case 1: //realizar reserva
+
+                            totResCli = 0;
+                            habNoResv = false;
+
                             printf("Introduzca Dni a colsultar:");
                             scanf("%s",cDniCli);
 
-                            printf("Introduzca codigo de habitacion");
+                            printf("Introduzca codigo de habitacion:");
                             scanf("%s",cCodHab);
 
-                            printf("Introduzca dia a reservar");
+                            printf("Introduzca dia a reservar:");
                             scanf("%i",&diaRes);
 
                             for(iRecRegCli = 0;iRecRegCli<Max_clientes;iRecRegCli++){
                                 for(iRecRegHabCli = 0;iRecRegHabCli < 5;iRecRegHabCli++){
                                     if(strcmp(aRegCli[iRecRegCli].rs_hab[iRecRegHabCli].cdHab, cCodHab) != 0){
-                                        for(iRecRegHab = 0;iRecRegHab<Max_habitaciones;iRecRegHab++){
-                                            strcpy(aRegCli[iRecRegCli].rs_hab[iRecRegHabCli].cdHab,cCodHab);
-                                            strcpy(aRegCli[iRecRegCli].rs_hab[iRecRegHabCli].tipo,aRegHab[iRecRegHab].tipo);
-                                            aRegCli[iRecRegCli].rs_hab[iRecRegHabCli].precio = aRegHab[iRecRegHab].precio;
+                                        totResCli++;
+                                        habNoResv = true;
+                                    }
+                                }
+                            }
+
+                            if(habNoResv == true){
+                                for(iRecRegCli = 0;iRecRegCli<Max_clientes;iRecRegCli++){
+                                    for(iRecRegHab = 0;iRecRegHab<Max_habitaciones;iRecRegHab++){
+                                        if(strcmp(aRegHab[iRecRegHab].cdHab, cCodHab) == 0){
+                                            strcpy(aRegCli[iRecRegCli].rs_hab[totResCli].cdHab,aRegHab[iRecRegHab].cdHab);
+                                            strcpy(aRegCli[iRecRegCli].rs_hab[totResCli].tipo,aRegHab[iRecRegHab].tipo);
+                                            aRegCli[iRecRegCli].rs_hab[totResCli].precio = aRegHab[iRecRegHab].precio;
+
+                                            strcpy(aRegRes[iRecRegHab][diaRes],aRegCli[iRecRegCli].dni);
                                         }
                                     }
                                 }
-                             }
-
-                             for(iRecRegResHab = 0;iRecRegResHab < Max_habitaciones;iRecRegResHab++){
-                                for(iRecRegResDia = 0;iRecRegResDia < 31;iRecRegResDia++){
-
-                                }
-                             }
+                            }
                             break;
                         case 2: //cancelar reserva
                             break;
                         case 3: // consultar reserva de un cliente
                             break;
                         case 4: //Listado general de reservas
+                            printf("LISTADO GENERAL DE RESERVAS\n");
+                            barraSeparadora();
+                            printf("\nNombre Cliente\tCodigo Habitación\tTipo Habitacion");
+                            for(iRecRegHab = 0;iRecRegHab<Max_habitaciones;iRecRegHab++){
+                                for(iDiaRes = 0;iDiaRes < 31;iDiaRes++){
+                                    for(iRecRegCli = 0;iRecRegCli < Max_clientes;iRecRegCli++){
+                                        if(strcmp(aRegRes[iRecRegHab][iDiaRes],aRegCli[iRecRegCli].dni) == 0){
+                                            for(iRecRegHabCli = 0;iRecRegHabCli<5;iRecRegHabCli++){
+                                                printf("%s\t%s\t%s",aRegCli[iRecRegCli].nom_apell,aRegCli[iRecRegCli].rs_hab[iRecRegHabCli].cdHab,aRegCli[iRecRegCli].rs_hab[iRecRegHabCli].tipo);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                             break;
                         case 0:
                             salMenGesRes = false;
@@ -514,9 +543,7 @@ void main(){
             case 0: //Salida de Menu de inicio
 
                 cont_Clientes = apertCorr("Clientes.dat");
-                tamRegCli = sizeof(aRegCli) / sizeof(aRegCli[0]);
-                eleEscriRegCli = fwrite(aRegCli,sizeof(tRegCliente),100,cont_Clientes);
-                errEscFich(eleEscriRegCli,tamRegCli);
+                fwrite(&aRegCli,sizeof(tRegCliente),Max_clientes,cont_Clientes);
                 fclose(cont_Clientes);
 
                 impArrCli(aRegCli);
