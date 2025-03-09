@@ -11,6 +11,7 @@ Fecha:<>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <time.h>
 
 
 const int Max_clientes = 100;
@@ -117,7 +118,7 @@ void menuGestRes(){
     printf("   1.- Realizar Reserva\n");
     printf("   2.- Cancelar Reserva\n");
     printf("   3.- Consultar Reserva de un Cliente\n");
-    printf("   5.- Listado General de Reservas\n");
+    printf("   4.- Listado General de Reservas\n");
     printf("   0.- Volver al Menu Principal\n");
     printf("Elija opcion:");
 }
@@ -130,20 +131,48 @@ void menuGestRes(){
 /*Objetivo: Compribar si el fichero se abre correctamente*/
 /***************************************************************************/
 
-FILE* apertCorr(char *fich){
-    FILE *open = fopen(fich,"ab");
+FILE *apertCorr(char *fich){
+    FILE *open = fopen(fich,"wb");
     if(open == NULL){
         printf("El fichero no se a habierto correctamente o no existe");
     }
     return open;
 }
 
-FILE* lecCorr(char *fich){
+FILE *lecCorr(char *fich){
     FILE *open = fopen(fich,"rb");
     if(open == NULL){
-        printf("El fichero no se a leido correctamente o no existe, creando fichero");
+        printf("El fichero no se a leido correctamente o no existe, creando fichero.\n");
     }
     return open;
+}
+
+FILE *apertCorrTxt(char *fich){
+    FILE *open = fopen(fich,"a");
+    if(open == NULL){
+        printf("El fichero no se a leido correctamente o no existe, creando fichero.\n");
+    }
+    return open;
+}
+
+int contRegCli(tRegCliente *aRegCli,int maxCli){
+    int cont = 0;
+    for(int i = 0;i<maxCli;i++){
+        if(strlen(aRegCli[i].nom_apell) > 0 && strlen(aRegCli[i].dni) > 0 && strlen(aRegCli[i].tp_cli) > 0){
+            cont++;
+        }
+    }
+    return cont;
+}
+
+int contRegHab(tRegHabitacion *aRegHab,int maxHab){
+    int cont = 0;
+    for(int i = 0;i<maxHab;i++){
+        if(strlen(aRegHab[i].cdHab) > 0 && strlen(aRegHab[i].tipo) > 0 && aRegHab[i].precio > 0){
+            cont++;
+        }
+    }
+    return cont;
 }
 
 void impArrCli(tRegCliente *regCli){
@@ -160,34 +189,6 @@ void impArrCli(tRegCliente *regCli){
     }
 }
 
-/***************************************************************************/
-/*Subprograma:Rellenar array cliente*/
-/*Tipo:Procedimiento(función tipo tRegCliente *)*/
-/*Parametros de Entrada: tRegCliente *arr */
-/*parametros de salida: arr */
-/*Objetivo: Inicializar el array de cliente*/
-/***************************************************************************/
-tRegCliente *rellArrCli(tRegCliente *arr){
-    int i = 0;
-    int j = 0;
-    //int tam = sizeof(arr) / sizeof(arr[0]);
-    for(i;i<Max_clientes;i++){
-        strcpy(arr[i].nom_apell,"\0");
-        strcpy(arr[i].dni,"\0");
-        strcpy(arr[i].tp_cli,"\0");
-
-        int tam2 = sizeof(arr[i].rs_hab) / sizeof(arr[i].rs_hab[0]);
-
-        for(j;j<5;j++){
-            strcpy(arr[i].rs_hab[j].cdHab,"\0");
-            strcpy(arr[i].rs_hab[j].tipo,"\0");
-            arr[i].rs_hab[j].precio = 0.0;
-        }
-    }
-    return arr;
-}
-//,FILE *habitaciones, FILE* reservas
-
 void errEscFich(size_t eleEsc,size_t numEle){
     if (eleEsc != numEle) {
         perror("Error al escribir en el archivo");
@@ -201,6 +202,7 @@ void main(){
 
     bool salMenIni = true, salMenGesCli = true, salMenGesHab = true, salMenGesRes = true;
     bool habNoEnc, habNoResv, resInt;
+    bool resAso,dniNoEnc;
 
     tRegCliente aRegCli[Max_clientes];
     tRegHabitacion aRegHab[Max_habitaciones];
@@ -209,20 +211,36 @@ void main(){
     size_t tamRegCli = 0;
     size_t eleEscriRegCli = 0;
 
-    int iRegCli = 0,iRecRegCli = 0,totCliReg = 0,totCliCat,totResCli;
-    int iRegHab = 0,iRecRegHab = 0,iRecRegHabCli,iCodHab = 1,tamRegHab = 0,totHabReg;
+    time_t tiemActu = time(NULL);
+
+    int iRegCli,iRecRegCli = 0,totCliReg = 0,totCliCat,totResCli;
+    int iRegHab,iRecRegHab = 0,iRecRegHabCli,iCodHab = 1,tamRegHab = 0,totHabReg;
     int iDiaRes = 0, diaRes,iRecRegResHab = 0, iRecRegResDia = 0;
 
-    char cDniCli[10], cCodHab[10], cTipoCli[12];
+    char cDniCli[10], cCodHab[10], cTipoCli[12],resCli[4],fechForm[50];
 
     FILE *cont_Clientes, *cont_Habitaciones, *cont_Reservas,cont_hcoHabitaciones, *totalGlobalHotel; //.dat
     FILE *habitacionesNuevas, *bajaHcoClientes, *bajaHcoHabitaciones, *bajaHcoReservas; //.txt
 
-    memcpy(aRegCli,rellArrCli(aRegCli),sizeof(aRegCli));
+    memset(aRegCli,0,sizeof(aRegCli)); //Inicializa todos los elementos del array a 0 o cadena vacia
 
     cont_Clientes = lecCorr("Clientes.dat");
-    fread(aRegCli,sizeof(tRegCliente),Max_clientes,cont_Clientes);
+
+    size_t numLeiCli = fread(aRegCli, sizeof(tRegCliente), Max_clientes, cont_Clientes);
     fclose(cont_Clientes);
+
+    if (numLeiCli != Max_clientes) {
+        printf("Error al leer el fichero o el fichero no contiene suficientes datos.\n");
+    }
+
+    cont_Habitaciones = lecCorr("Habitaciones.dat");
+
+    size_t numLeiHab = fread(aRegHab, sizeof(tRegHabitacion), Max_habitaciones, cont_Habitaciones);
+    fclose(cont_Habitaciones);
+
+    if (numLeiHab != Max_habitaciones) {
+        printf("Error al leer el fichero o el fichero no contiene suficientes datos.\n");
+    }
 
     do{
         int eMenIni;
@@ -243,6 +261,8 @@ void main(){
 
                             while (getchar() != '\n');
 
+                            iRegCli = contRegCli(aRegCli,Max_clientes);
+
                             printf("Introduce nombre:");
                             scanf("%s",aRegCli[iRegCli].nom_apell);
 
@@ -257,20 +277,53 @@ void main(){
                         case 2: //Baja (bien)
 
                             //bajaHcoClientes = apertCorr(fopen("bajaHcoClientes.txt","a"));
+                            while (getchar() != '\n');
+
+                            resAso = true;
+                            dniNoEnc = true;
+
+                            totResCli = 0;
 
                             printf("Introduzca Dni para dar de baja");
                             scanf("%s",cDniCli);
 
                             for(iRecRegCli = 0;iRecRegCli<Max_clientes;iRecRegCli++){
-                                if(strcmp(aRegCli[iRecRegCli].dni,cDniCli) == 0){
-                                    strcpy(aRegCli[iRecRegCli].nom_apell,"\0");
-                                    strcpy(aRegCli[iRecRegCli].dni,"\0");
-                                    strcpy(aRegCli[iRecRegCli].tp_cli,"\0");
+                                for(iRecRegHabCli = 0;iRecRegHabCli < 5;iRecRegHabCli++){
+                                    if(strlen(aRegCli[iRecRegCli].rs_hab[iRecRegHabCli].cdHab) > 0){
+                                        totResCli++;
+                                    }
                                 }
                             }
-                            //fclose(bajaHcoClientes);
+
+                            for(iRecRegCli = 0;iRecRegCli<Max_clientes;iRecRegCli++){
+                                if(strcmp(aRegCli[iRecRegCli].dni,cDniCli) == 0){
+                                    printf("¿Desea dar de baja a este ciente?(S/N)");
+                                    scanf("%s",resCli);
+                                    if(strcmp(resCli,"S") == 0 && totResCli < 1){
+
+                                        cont_Clientes = apertCorrTxt("bajaHcoClientes.txt");
+                                        fprintf(cont_Clientes,"%s-%s-%s\n",aRegCli[iRecRegCli].dni,aRegCli[iRecRegCli].nom_apell,aRegCli[iRecRegCli].tp_cli);
+                                        fclose(cont_Clientes);
+
+                                        strcpy(aRegCli[iRecRegCli].nom_apell,"\0");
+                                        strcpy(aRegCli[iRecRegCli].dni,"\0");
+                                        strcpy(aRegCli[iRecRegCli].tp_cli,"\0");
+
+                                        resAso = false;
+                                    }
+                                    dniNoEnc = false;
+                                }
+                            }
+                            if(resAso == true){
+                                printf("ERROR:No se pudo dar de baja al cliente %s ya que tiene reserva asociada",cDniCli);
+                            }
+                            if(dniNoEnc == true){
+                                printf("ERROR:Este cliente no se encuentra en nuestro registro de datos");
+                            }
                             break;
                         case 3: //Modificacion (bien)
+                            while (getchar() != '\n');
+
                             printf("\nIntroduzca Dni para modificar un cliente");
                             scanf("%s",cDniCli);
 
@@ -289,6 +342,8 @@ void main(){
                             break;
                         case 4: //Consulta
 
+                            while (getchar() != '\n');
+
                             printf("Introduzca Dni a colsultar:");
                             scanf("%s",cDniCli);
 
@@ -306,19 +361,22 @@ void main(){
                         case 5: //Listado General (bien)
                             printf("\nNombre y Apellidos\tDNI\t\tCategorias\n");
 
-                            totCliReg = 0;
+                            totCliReg = contRegCli(aRegCli,Max_clientes);
 
                             for(iRecRegCli = 0;iRecRegCli<Max_clientes;iRecRegCli++){
                                 if(strlen(aRegCli[iRecRegCli].nom_apell) > 0 && strlen(aRegCli[iRecRegCli].dni) > 0 && strlen(aRegCli[iRecRegCli].tp_cli) > 0){
                                     printf("\t%s\t\t%s\t\t%s\n",aRegCli[iRecRegCli].nom_apell,aRegCli[iRecRegCli].dni,aRegCli[iRecRegCli].tp_cli);
-                                    totCliReg++;
-
+                                    if(iRecRegCli >= totCliReg){
+                                       totCliReg++;
+                                    }
                                 }
                             }
-
                             printf("Total: %i clientes registrados.\n",totCliReg);
                             break;
                         case 6: //Listado por categorias
+
+                            while (getchar() != '\n');
+
                             printf("Introduzca Categoria a consultar:");
                             scanf("%s",cTipoCli);
 
@@ -355,9 +413,11 @@ void main(){
                     switch(eMenHab){
                         case 1: //Alta Habitacion
 
+                            iRegHab = contRegHab(aRegHab,Max_habitaciones);
+
                             while (getchar() != '\n');
 
-                            sprintf(aRegHab[iRegHab].cdHab, "HAB_%03d", iCodHab);
+                            sprintf(aRegHab[iRegHab].cdHab, "HAB_%03d", iRegHab);
 
                             printf("Introduce tipo de habitacion:");
                             scanf("%s",aRegHab[iRegHab].tipo);
@@ -365,13 +425,17 @@ void main(){
                             printf("Introduce el precio de la habitacion:");
                             scanf("%f",&aRegHab[iRegHab].precio);
 
-                            iCodHab++;
                             iRegHab++;
                             break;
                         case 2: //Baja Habitacion
 
                             habNoEnc = true;
                             habNoResv = true;
+
+                            struct tm *fecha = localtime(&tiemActu);
+                            strftime(fechForm, sizeof(fechForm), "%d/%m/%Y", fecha);
+
+                            while (getchar() != '\n');
 
                             printf("Introduzca codigo de habitacion para dar de baja");
                             scanf("%s",cCodHab);
@@ -381,6 +445,11 @@ void main(){
                                     if(strcmp(aRegCli[iRecRegCli].rs_hab[iRecRegHabCli].cdHab, cCodHab) != 0){
                                         for(iRecRegHab = 0;iRecRegHab<Max_habitaciones;iRecRegHab++){
                                             if(strcmp(aRegHab[iRecRegHab].cdHab,cCodHab) == 0){
+
+                                                cont_Habitaciones = apertCorrTxt("bajaHcoHabitaciones.txt");
+                                                fprintf(cont_Habitaciones,"%s-%s-%s\n",aRegHab[iRecRegHab].cdHab,aRegHab[iRecRegHab].tipo,fechForm);
+                                                fclose(cont_Habitaciones);
+
                                                 strcpy(aRegHab[iRecRegHab].cdHab,"\0");
                                                 strcpy(aRegHab[iRecRegHab].tipo,"\0");
                                                 aRegHab[iRecRegHab].precio = 0.0;
@@ -403,6 +472,8 @@ void main(){
                         case 3: //Modificacion Habitacion
 
                             habNoEnc = true;
+
+                            while (getchar() != '\n');
 
                             printf("Introduzca codigo de habitacion para ser modificado");
                             scanf("%s",cCodHab);
@@ -427,6 +498,8 @@ void main(){
                             break;
                         case 4: //Consulta Habitacion
 
+                            while (getchar() != '\n');
+
                             printf("Introduzca codigo de habitacion a colsultar");
                             scanf("%s",cCodHab);
 
@@ -434,20 +507,22 @@ void main(){
                                 if(strcmp(aRegHab[iRecRegHab].cdHab, cCodHab) == 0){
                                     printf("Codigo Habitacion:%s\n",aRegHab[iRecRegHab].cdHab);
                                     printf("Tipo:%s\n",aRegHab[iRecRegHab].tipo);
-                                    printf("Precio:%f\n",&aRegHab[iRecRegHab].precio);
+                                    printf("Precio:%f\n",aRegHab[iRecRegHab].precio);
                                     break;
                                 }
                             }
                             break;
                         case 5: //Listado General de Habitacion
 
-                            totHabReg = 0;
+                            totHabReg = contRegHab(aRegHab,Max_habitaciones);
 
                             printf("\nNombre y Apellidos\tDNI\t\tCategorias\n");
                             for(iRecRegHab = 0;iRecRegHab < Max_habitaciones;iRecRegHab++){
                                 if(strlen(aRegHab[iRecRegHab].cdHab) > 0 && strlen(aRegHab[iRecRegHab].tipo) > 0 && aRegHab[iRecRegHab].precio > 0){
                                     printf("\t%s\t\t%s\t%f\n",aRegHab[iRecRegHab].cdHab,aRegHab[iRecRegHab].tipo,aRegHab[iRecRegHab].precio);
-                                    totHabReg++;
+                                    if(iRecRegHab >= totHabReg){
+                                       totHabReg++;
+                                    }
                                 }
                             }
                             printf("Total: %i habitaciones registradas.\n",totHabReg);
@@ -474,6 +549,8 @@ void main(){
 
                             totResCli = 0;
                             habNoResv = false;
+
+                            while (getchar() != '\n');
 
                             printf("Introduzca Dni a colsultar:");
                             scanf("%s",cDniCli);
@@ -541,13 +618,6 @@ void main(){
             case 5: //Importar Habitaciones desde ficheros
                 break;
             case 0: //Salida de Menu de inicio
-
-                cont_Clientes = apertCorr("Clientes.dat");
-                fwrite(&aRegCli,sizeof(tRegCliente),Max_clientes,cont_Clientes);
-                fclose(cont_Clientes);
-
-                impArrCli(aRegCli);
-
                 printf("\n¡Gracias por utilizar la aplicacion GEST-HOTEL!\n");
                 salMenIni = false;
                 break;
@@ -558,4 +628,24 @@ void main(){
         }
 
     }while(salMenIni == true);
+
+    cont_Clientes = apertCorr("Clientes.dat");
+    size_t numEscCli = fwrite(aRegCli, sizeof(tRegCliente), Max_clientes, cont_Clientes);
+    fclose(cont_Clientes);
+
+    if (numEscCli != Max_clientes) {
+        printf("Error: No se escribieron todos los datos en el fichero.\n");
+    } else {
+        printf("Datos guardados correctamente en el fichero.\n");
+    }
+
+    cont_Habitaciones = apertCorr("Habitaciones.dat");
+    size_t numEscHab = fwrite(aRegHab, sizeof(tRegHabitacion), Max_habitaciones, cont_Habitaciones);
+    fclose(cont_Habitaciones);
+
+    if (numEscHab != Max_habitaciones) {
+        printf("Error: No se escribieron todos los datos en el fichero.\n");
+    } else {
+        printf("Datos guardados correctamente en el fichero.\n");
+    }
 }
