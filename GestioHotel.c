@@ -616,6 +616,35 @@ void main(){
             case 4: //Informes Economicos
                 break;
             case 5: //Importar Habitaciones desde ficheros
+
+                iRegHab = contRegHab(aRegHab,Max_habitaciones);
+
+                cont_Habitaciones = fopen("habitacionesNuevas.txt","r");
+                char linea[100];
+                char *token;
+
+                if (cont_Habitaciones == NULL) {
+                    printf("Error: No se pudo abrir el fichero.\n");
+                    return 1;
+                }
+
+                while(fgets(linea, sizeof(linea), cont_Habitaciones) != NULL){
+                    linea[strcspn(linea, "\n")] = '\0';
+                    token = strtok(linea,"#");
+                    if(token != NULL) {
+
+                        sprintf(aRegHab[iRegHab].cdHab, "HAB_%03d", iRegHab);
+                        strcpy(aRegHab[iRegHab].tipo,token);
+
+                        token = strtok(NULL, "#");
+                        if(token != NULL){
+                            aRegHab[iRegHab].precio = atoi(token);
+                        }
+                    }
+                    iRegHab++;
+                }
+
+                fclose(cont_Habitaciones);
                 break;
             case 0: //Salida de Menu de inicio
                 printf("\n¡Gracias por utilizar la aplicacion GEST-HOTEL!\n");

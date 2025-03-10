@@ -1,0 +1,5 @@
+individual#50.00
+doble#25.50
+individual#100.00
+doble#27.50
+suit#200.20
