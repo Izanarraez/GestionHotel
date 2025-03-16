@@ -667,7 +667,7 @@ void listaGeneralReservas(tRegCliente *aRegCli, char **aRegRes){
 
 tRegHabitacion *importarNuevaHabitacionFichero(tRegHabitacion *aRegHab){
     int iRegHab = contRegHab(aRegHab,Max_habitaciones);
-
+    printf("%i",iRegHab);
     FILE *cont_Habitaciones = fopen("habitacionesNuevas.txt","r");
     char linea[100];
     char *token;
@@ -695,7 +695,51 @@ tRegHabitacion *importarNuevaHabitacionFichero(tRegHabitacion *aRegHab){
     return aRegHab;
 }
 
+void importarClientesFichero(tRegCliente *aRegCli){
+    FILE *cont_Clientes = lecCorr("Clientes.dat");
 
+    size_t numLeiCli = fread(aRegCli, sizeof(tRegCliente), Max_clientes, cont_Clientes);
+    fclose(cont_Clientes);
+
+    if (numLeiCli != Max_clientes) {
+        printf("Error al leer el fichero o el fichero no contiene suficientes datos.\n");
+    }
+}
+
+void importarHabitacionFichero(tRegHabitacion *aRegHab){
+    FILE *cont_Habitaciones = lecCorr("Habitaciones.dat");
+
+    size_t numLeiHab = fread(aRegHab, sizeof(tRegHabitacion), Max_habitaciones, cont_Habitaciones);
+    fclose(cont_Habitaciones);
+
+    if (numLeiHab != Max_habitaciones) {
+        printf("Error al leer el fichero o el fichero no contiene suficientes datos.\n");
+    }
+}
+
+void guardarClienteFichero(tRegCliente *aRegCli){
+    FILE *cont_Clientes = apertCorr("Clientes.dat");
+    size_t numEscCli = fwrite(aRegCli, sizeof(tRegCliente), Max_clientes, cont_Clientes);
+    fclose(cont_Clientes);
+
+    if (numEscCli != Max_clientes) {
+        printf("Error: No se escribieron todos los datos en el fichero.\n");
+    } else {
+        printf("Datos guardados correctamente en el fichero.\n");
+    }
+}
+
+void guardarHabitacionFichero(tRegHabitacion *aRegHab){
+    FILE *cont_Habitaciones = apertCorr("Habitaciones.dat");
+    size_t numEscHab = fwrite(aRegHab, sizeof(tRegHabitacion), Max_habitaciones, cont_Habitaciones);
+    fclose(cont_Habitaciones);
+
+    if (numEscHab != Max_habitaciones) {
+        printf("Error: No se escribieron todos los datos en el fichero.\n");
+    } else {
+        printf("Datos guardados correctamente en el fichero.\n");
+    }
+}
 
 void main(){
 
@@ -703,8 +747,6 @@ void main(){
     printf("¡Bienvenido a la aplicacion GEST_HOTEL!");
 
     bool salMenIni = true, salMenGesCli = true, salMenGesHab = true, salMenGesRes = true;
-    bool habNoEnc, habNoResv, resInt;
-    bool resAso,dniNoEnc;
 
     tRegCliente aRegCli[Max_clientes];
     tRegHabitacion aRegHab[Max_habitaciones];
@@ -713,36 +755,19 @@ void main(){
     size_t tamRegCli = 0;
     size_t eleEscriRegCli = 0;
 
-    time_t tiemActu = time(NULL);
-
     int iRegCli,iRecRegCli = 0,totCliReg = 0,totCliCat,totResCli;
-    int iRegHab,iRecRegHab = 0,iRecRegHabCli,iCodHab = 1,tamRegHab = 0,totHabReg;
+    int iRecRegHab = 0,iRecRegHabCli,iCodHab = 1,tamRegHab = 0,totHabReg;
     int iDiaRes = 0, diaRes,iRecRegResHab = 0, iRecRegResDia = 0;
 
-    char cDniCli[10], cCodHab[10], cTipoCli[12],resCli[4],fechForm[50];
+    char cDniCli[10], cCodHab[10];
 
     FILE *cont_Clientes, *cont_Habitaciones, *cont_Reservas,cont_hcoHabitaciones, *totalGlobalHotel; //.dat
     FILE *habitacionesNuevas, *bajaHcoClientes, *bajaHcoHabitaciones, *bajaHcoReservas; //.txt
 
     memset(aRegCli,0,sizeof(aRegCli)); //Inicializa todos los elementos del array a 0 o cadena vacia
 
-    cont_Clientes = lecCorr("Clientes.dat");
-
-    size_t numLeiCli = fread(aRegCli, sizeof(tRegCliente), Max_clientes, cont_Clientes);
-    fclose(cont_Clientes);
-
-    if (numLeiCli != Max_clientes) {
-        printf("Error al leer el fichero o el fichero no contiene suficientes datos.\n");
-    }
-
-    cont_Habitaciones = lecCorr("Habitaciones.dat");
-
-    size_t numLeiHab = fread(aRegHab, sizeof(tRegHabitacion), Max_habitaciones, cont_Habitaciones);
-    fclose(cont_Habitaciones);
-
-    if (numLeiHab != Max_habitaciones) {
-        printf("Error al leer el fichero o el fichero no contiene suficientes datos.\n");
-    }
+    importarClientesFichero(aRegCli);
+    importarHabitacionFichero(aRegHab);
 
     do{
         int eMenIni;
@@ -900,23 +925,7 @@ void main(){
 
     }while(salMenIni == true);
 
-    cont_Clientes = apertCorr("Clientes.dat");
-    size_t numEscCli = fwrite(aRegCli, sizeof(tRegCliente), Max_clientes, cont_Clientes);
-    fclose(cont_Clientes);
+    guardarClienteFichero(aRegCli);
+    guardarHabitacionFichero(aRegHab);
 
-    if (numEscCli != Max_clientes) {
-        printf("Error: No se escribieron todos los datos en el fichero.\n");
-    } else {
-        printf("Datos guardados correctamente en el fichero.\n");
-    }
-
-    cont_Habitaciones = apertCorr("Habitaciones.dat");
-    size_t numEscHab = fwrite(aRegHab, sizeof(tRegHabitacion), Max_habitaciones, cont_Habitaciones);
-    fclose(cont_Habitaciones);
-
-    if (numEscHab != Max_habitaciones) {
-        printf("Error: No se escribieron todos los datos en el fichero.\n");
-    } else {
-        printf("Datos guardados correctamente en el fichero.\n");
-    }
 }
