@@ -1,4 +1,4 @@
-individual#50.00
+normal#50.00
 doble#25.50
 individual#100.00
 doble#27.50
