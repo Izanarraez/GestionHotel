@@ -30,11 +30,6 @@ typedef struct{
     tRegHabitacion rs_hab[5];
 }tRegCliente;
 
-typedef union{
-    tRegCliente regCli;
-    char **resv;
-}strucMatr;
-
 /***************************************************************************/
 /*Subprograma:Barra Separadora*/
 /*Tipo:Procedimiento(función tipo void)*/
@@ -153,6 +148,49 @@ int buscarHabitacion(tRegHabitacion *aRegHab,char *cdHab){
     return -1;
 }
 
+int contRegCli(tRegCliente *aRegCli){
+    int cont = 0;
+    for(int i = 0;i<Max_clientes;i++){
+        if(strlen(aRegCli[i].nom_apell) > 0 && strlen(aRegCli[i].dni) > 0 && strlen(aRegCli[i].tp_cli) > 0){
+            cont++;
+        }
+    }
+    return cont;
+}
+
+int contRegHab(tRegHabitacion *aRegHab){
+    int cont = 0;
+    for(int i = 0;i<Max_habitaciones;i++){
+        if(strlen(aRegHab[i].cdHab) > 0 && strlen(aRegHab[i].tipo) > 0 && aRegHab[i].precio > 0){
+            cont++;
+        }
+    }
+    return cont;
+}
+
+int numeroHabitacionesReservadas(tRegCliente *aRegCli,int posicion){
+    int cont = 0;
+    for(int i=0;i<5;i++){
+        if(strlen(aRegCli[posicion].rs_hab[i].cdHab)>0){
+            cont++;
+        }
+    }
+    return cont;
+}
+
+bool habitacionesReservadas(tRegCliente *aRegCli,tRegHabitacion *aRegHab,int posicion){
+    bool resp = false;
+
+    for(int i= 0;i<Max_clientes;i++){
+        for(int j=0;j<5;j++){
+            if(strcmp(aRegCli[i].rs_hab[j].cdHab,aRegHab[posicion].cdHab) == 0){
+                resp = true;
+            }
+        }
+    }
+
+    return resp;
+}
 
 
 FILE *apertCorr(char *fich){
@@ -179,25 +217,7 @@ FILE *apertCorrTxt(char *fich){
     return open;
 }
 
-int contRegCli(tRegCliente *aRegCli){
-    int cont = 0;
-    for(int i = 0;i<Max_clientes;i++){
-        if(strlen(aRegCli[i].nom_apell) > 0 && strlen(aRegCli[i].dni) > 0 && strlen(aRegCli[i].tp_cli) > 0){
-            cont++;
-        }
-    }
-    return cont;
-}
 
-int contRegHab(tRegHabitacion *aRegHab){
-    int cont = 0;
-    for(int i = 0;i<Max_habitaciones;i++){
-        if(strlen(aRegHab[i].cdHab) > 0 && strlen(aRegHab[i].tipo) > 0 && aRegHab[i].precio > 0){
-            cont++;
-        }
-    }
-    return cont;
-}
 
 int asigNumHab(tRegHabitacion *aRegHab){
     int numero = contRegHab(aRegHab);
@@ -228,7 +248,7 @@ tRegCliente *altaCliente(tRegCliente *aRegCli){
     while (getchar() != '\n');
 
     int iRegCli = contRegCli(aRegCli);
-
+    printf("%i",iRegCli);
     printf("Introduce nombre:");
     scanf("%s",aRegCli[iRegCli].nom_apell);
 
@@ -268,32 +288,29 @@ tRegCliente *bajaCliente(tRegCliente *aRegCli){
     printf("Introduzca Dni para dar de baja");
     scanf("%s",cDniCli);
 
-    for(iRecRegCli = 0;iRecRegCli<Max_clientes;iRecRegCli++){
-        for(iRecRegHabCli = 0;iRecRegHabCli < 5;iRecRegHabCli++){
-            if(strlen(aRegCli[iRecRegCli].rs_hab[iRecRegHabCli].cdHab) > 0){
-                totResCli++;
-            }
+    int posCli = buscarCliente(aRegCli,cDniCli);
+    int tamCli = 1 - contRegCli(aRegCli);
+
+    if(posCli != -1){
+        printf("¿Desea dar de baja a este ciente?(S/N)");
+        scanf("%s",resCli);
+        if(strcmp(resCli,"S") == 0 && numeroHabitacionesReservadas(aRegCli,posCli) == 0){
+
+            cont_Clientes = apertCorrTxt("bajaHcoClientes.txt");
+            fprintf(cont_Clientes,"%s-%s-%s\n",aRegCli[posCli].dni,aRegCli[posCli].nom_apell,aRegCli[posCli].tp_cli);
+            fclose(cont_Clientes);
+
+            strcpy(aRegCli[posCli].nom_apell,aRegCli[tamCli].nom_apell);
+            strcpy(aRegCli[posCli].dni,aRegCli[tamCli].dni);
+            strcpy(aRegCli[posCli].tp_cli,aRegCli[tamCli].tp_cli);
+
+            strcpy(aRegCli[tamCli].nom_apell,"\0");
+            strcpy(aRegCli[tamCli].dni,"\0");
+            strcpy(aRegCli[tamCli].tp_cli,"\0");
+
+            resAso = false;
         }
-    }
-
-    for(iRecRegCli = 0;iRecRegCli<Max_clientes;iRecRegCli++){
-        if(strcmp(aRegCli[iRecRegCli].dni,cDniCli) == 0){
-            printf("¿Desea dar de baja a este ciente?(S/N)");
-            scanf("%s",resCli);
-            if(strcmp(resCli,"S") == 0 && totResCli < 1){
-
-                cont_Clientes = apertCorrTxt("bajaHcoClientes.txt");
-                fprintf(cont_Clientes,"%s-%s-%s\n",aRegCli[iRecRegCli].dni,aRegCli[iRecRegCli].nom_apell,aRegCli[iRecRegCli].tp_cli);
-                fclose(cont_Clientes);
-
-                strcpy(aRegCli[iRecRegCli].nom_apell,"\0");
-                strcpy(aRegCli[iRecRegCli].dni,"\0");
-                strcpy(aRegCli[iRecRegCli].tp_cli,"\0");
-
-                resAso = false;
-            }
         dniNoEnc = false;
-        }
     }
     if(resAso == true){
         printf("ERROR:No se pudo dar de baja al cliente %s ya que tiene reserva asociada",cDniCli);
@@ -323,17 +340,17 @@ tRegCliente *bajaCliente(tRegCliente *aRegCli){
     printf("\nIntroduzca Dni para modificar un cliente");
     scanf("%s",cDniCli);
 
-    for(iRecRegCli = 0;iRecRegCli<Max_clientes;iRecRegCli++){
-        if(strcmp(aRegCli[iRecRegCli].dni, cDniCli) == 0){
+    int posCli = buscarCliente(aRegCli,cDniCli);
 
-            while (getchar() != '\n');
+    if(posCli != -1){
 
-            printf("Introduzca nombre:");
-            scanf("%s",aRegCli[iRecRegCli].nom_apell);
+        while (getchar() != '\n');
 
-            printf("Introduce Tipo Cliente:");
-            scanf("%s",aRegCli[iRecRegCli].tp_cli);
-        }
+        printf("Introduzca nombre:");
+        scanf("%s",aRegCli[posCli].nom_apell);
+
+        printf("Introduce Tipo Cliente:");
+        scanf("%s",aRegCli[posCli].tp_cli);
     }
     return aRegCli;
 }
@@ -355,13 +372,13 @@ void consultaCliente(tRegCliente *aRegCli){
     printf("Introduzca Dni a colsultar:");
     scanf("%s",cDniCli);
 
-    for(iRecRegCli = 0;iRecRegCli<Max_clientes;iRecRegCli++){
-        if(strcmp(aRegCli[iRecRegCli].dni, cDniCli) == 0){
-            printf("Nombre y Apellidos:%s\n",aRegCli[iRecRegCli].nom_apell);
-            printf("DNI:%s\n",aRegCli[iRecRegCli].dni);
-            printf("Pipo de Cliente:%s\n",aRegCli[iRecRegCli].tp_cli);
-            printf("Habitaciones Reservadas:%d\n",aRegCli[iRecRegCli].rs_hab); //Falta
-        }
+    int posCli = buscarCliente(aRegCli,cDniCli);
+
+    if(posCli != -1){
+        printf("Nombre y Apellidos:%s\n",aRegCli[posCli].nom_apell);
+        printf("DNI:%s\n",aRegCli[posCli].dni);
+        printf("Pipo de Cliente:%s\n",aRegCli[posCli].tp_cli);
+        printf("Habitaciones Reservadas:%d\n",aRegCli[posCli].rs_hab); //Falta
     }
 }
 
@@ -376,15 +393,11 @@ void consultaCliente(tRegCliente *aRegCli){
 void listadoGeneralCliente(tRegCliente *aRegCli){
     printf("\nNombre y Apellidos\tDNI\t\tCategorias\n");
 
-    int iRecRegCli;
     int totCliReg = contRegCli(aRegCli);
 
-    for(iRecRegCli = 0;iRecRegCli<Max_clientes;iRecRegCli++){
+    for(int iRecRegCli = 0;iRecRegCli<Max_clientes;iRecRegCli++){
         if(strlen(aRegCli[iRecRegCli].nom_apell) > 0 && strlen(aRegCli[iRecRegCli].dni) > 0 && strlen(aRegCli[iRecRegCli].tp_cli) > 0){
-            printf("\t%s\t\t%s\t\t%s\n",aRegCli[iRecRegCli].nom_apell,aRegCli[iRecRegCli].dni,aRegCli[iRecRegCli].tp_cli);
-            if(iRecRegCli >= totCliReg){
-                totCliReg++;
-            }
+            printf("%i\t%s\t\t%s\t\t%s\n",iRecRegCli,aRegCli[iRecRegCli].nom_apell,aRegCli[iRecRegCli].dni,aRegCli[iRecRegCli].tp_cli);
         }
     }
     printf("Total: %i clientes registrados.\n",totCliReg);
@@ -431,6 +444,7 @@ void listadoPorCategoriasCliente(tRegCliente *aRegCli){
 tRegHabitacion *altaHabitacion(tRegHabitacion *aRegHab){
 
     int iRegHab = asigNumHab(aRegHab);
+
     printf("%i",iRegHab);
     while (getchar() != '\n');
 
@@ -475,25 +489,27 @@ tRegHabitacion *bajaHabitacion(tRegCliente *aRegCli,tRegHabitacion *aRegHab){
     printf("Introduzca codigo de habitacion para dar de baja");
     scanf("%s",cCodHab);
 
-    for(iRecRegCli = 0;iRecRegCli<Max_clientes;iRecRegCli++){
-        for(iRecRegHabCli = 0;iRecRegHabCli < 5;iRecRegHabCli++){
-            if(strcmp(aRegCli[iRecRegCli].rs_hab[iRecRegHabCli].cdHab, cCodHab) != 0){
-                for(iRecRegHab = 0;iRecRegHab<Max_habitaciones;iRecRegHab++){
-                    if(strcmp(aRegHab[iRecRegHab].cdHab,cCodHab) == 0){
+    int posHab = buscarHabitacion(aRegHab,cCodHab);
+    int tamHab = contRegHab(aRegHab);
 
-                        cont_Habitaciones = apertCorrTxt("bajaHcoHabitaciones.txt");
-                        fprintf(cont_Habitaciones,"%s-%s-%s\n",aRegHab[iRecRegHab].cdHab,aRegHab[iRecRegHab].tipo,fechForm);
-                        fclose(cont_Habitaciones);
+    if(posHab != -1){
+        if(habitacionesReservadas(aRegCli,aRegHab,posHab) == false){
 
-                        strcpy(aRegHab[iRecRegHab].cdHab,"\0");
-                        strcpy(aRegHab[iRecRegHab].tipo,"\0");
-                        aRegHab[iRecRegHab].precio = 0.0;
-                        habNoEnc = false;
-                    }
-                }
+            cont_Habitaciones = apertCorrTxt("bajaHcoHabitaciones.txt");
+            fprintf(cont_Habitaciones,"%s-%s-%s\n",aRegHab[posHab].cdHab,aRegHab[posHab].tipo,fechForm);
+            fclose(cont_Habitaciones);
+
+            strcpy(aRegHab[posHab].cdHab,aRegHab[tamHab].cdHab);
+            strcpy(aRegHab[posHab].tipo,aRegHab[tamHab].tipo);
+            aRegHab[posHab].precio = aRegHab[tamHab].precio;
+
+            strcpy(aRegHab[tamHab].cdHab,"\0");
+            strcpy(aRegHab[tamHab].tipo,"\0");
+            aRegHab[tamHab].precio = 0;
+
             habNoResv = false;
-            }
         }
+        habNoEnc = false;
     }
 
     if(habNoEnc == true){
@@ -591,11 +607,7 @@ void listadoGeneralHabitacion(tRegHabitacion *aRegHab){
     printf("\nNombre y Apellidos\tDNI\t\tCategorias\n");
     for(iRecRegHab = 0;iRecRegHab < Max_habitaciones;iRecRegHab++){
         if(strlen(aRegHab[iRecRegHab].cdHab) > 0 && strlen(aRegHab[iRecRegHab].tipo) > 0 && aRegHab[iRecRegHab].precio > 0){
-            printf("\t%s\t\t%s\t%f\n",aRegHab[iRecRegHab].cdHab,aRegHab[iRecRegHab].tipo,aRegHab[iRecRegHab].precio);
-            /*if(iRecRegHab > totHabReg){
-                totHabReg++;
-                printf("%i",iRecRegHab);
-            }*/
+            printf("%i\t%s\t\t%s\t%f\n",iRecRegHab,aRegHab[iRecRegHab].cdHab,aRegHab[iRecRegHab].tipo,aRegHab[iRecRegHab].precio);
         }
     }
     printf("Total: %i habitaciones registradas.\n",totHabReg);
@@ -682,7 +694,7 @@ void listaGeneralReservas(tRegCliente *aRegCli, char **aRegRes){
 }
 
 tRegHabitacion *importarNuevaHabitacionFichero(tRegHabitacion *aRegHab){
-    int iRegHab = 1 + asigNumHab(aRegHab);
+    int iRegHab = 1 + asigNumHab(aRegHab);  //Puede producir fallo
     printf("%i",iRegHab);
     FILE *cont_Habitaciones = fopen("habitacionesNuevas.txt","r");
     char linea[100];
@@ -768,17 +780,7 @@ void main(){
     tRegHabitacion aRegHab[Max_habitaciones];
     char aRegRes[Max_habitaciones][31];
 
-    size_t tamRegCli = 0;
-    size_t eleEscriRegCli = 0;
-
-    int iRegCli,iRecRegCli = 0,totCliReg = 0,totCliCat,totResCli;
-    int iRecRegHab = 0,iRecRegHabCli,iCodHab = 1,tamRegHab = 0,totHabReg;
-    int iDiaRes = 0, diaRes,iRecRegResHab = 0, iRecRegResDia = 0;
-
     char cDniCli[10], cCodHab[10];
-
-    FILE *cont_Clientes, *cont_Habitaciones, *cont_Reservas,cont_hcoHabitaciones, *totalGlobalHotel; //.dat
-    FILE *habitacionesNuevas, *bajaHcoClientes, *bajaHcoHabitaciones, *bajaHcoReservas; //.txt
 
     memset(aRegCli,0,sizeof(aRegCli)); //Inicializa todos los elementos del array a 0 o cadena vacia
 
