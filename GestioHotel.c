@@ -220,14 +220,28 @@ FILE *apertCorrTxt(char *fich){
 
 
 int asigNumHab(tRegHabitacion *aRegHab){
-    int numero = contRegHab(aRegHab);
+    char token;
+    int cods [Max_habitaciones];
+    int cont = 0;
+    int n = contRegHab(aRegHab);
 
-    for(int i = 0;i<Max_habitaciones;i++){
-        if(strlen(aRegHab[i].cdHab) > 0){
-            numero = i;
+    for(int i = 0;i < Max_habitaciones;i++){
+        token = strtok(aRegHab[i].cdHab,"_");
+        token = strtok(NULL, "_");
+        cods[i] = atoi(token);
+    }
+
+    for (int i = 0; i < n-1; i++) { //Mirar este apartado
+        for (int j = 0; j < n-i-1; j++) {
+            if (cods[j] > cods[j+1]) {
+                int temp = cods[j];
+                cods[j] = cods[j+1];
+                cods[j+1] = temp;
+                cont++;
+            }
         }
     }
-    return numero;
+    return cods[cont-1];
 }
 
 void errEscFich(size_t eleEsc,size_t numEle){
@@ -604,7 +618,7 @@ void listadoGeneralHabitacion(tRegHabitacion *aRegHab){
     int totHabReg = contRegHab(aRegHab);
     int iRecRegHab;
 
-    printf("\nNombre y Apellidos\tDNI\t\tCategorias\n");
+    printf("\nCodigo\tTipo\t\tPrecio/Noche)\n");
     for(iRecRegHab = 0;iRecRegHab < Max_habitaciones;iRecRegHab++){
         if(strlen(aRegHab[iRecRegHab].cdHab) > 0 && strlen(aRegHab[iRecRegHab].tipo) > 0 && aRegHab[iRecRegHab].precio > 0){
             printf("%i\t%s\t\t%s\t%f\n",iRecRegHab,aRegHab[iRecRegHab].cdHab,aRegHab[iRecRegHab].tipo,aRegHab[iRecRegHab].precio);
@@ -694,7 +708,7 @@ void listaGeneralReservas(tRegCliente *aRegCli, char **aRegRes){
 }
 
 tRegHabitacion *importarNuevaHabitacionFichero(tRegHabitacion *aRegHab){
-    int iRegHab = 1 + asigNumHab(aRegHab);  //Puede producir fallo
+    int iRegHab = asigNumHab(aRegHab);  //Puede producir fallo
     printf("%i",iRegHab);
     FILE *cont_Habitaciones = fopen("habitacionesNuevas.txt","r");
     char linea[100];
