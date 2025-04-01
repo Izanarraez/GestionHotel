@@ -657,7 +657,7 @@ void listadoGeneralHabitacion(tRegHabitacion *aRegHab){
     printf("Total: %i habitaciones registradas.\n",totHabReg);
 }
 
-char **altaReserva(tRegCliente *aRegCli, tRegHabitacion *aRegHab, char **aRegRes,char *cDniCli,char *cCodHab){
+char *altaReserva(tRegCliente *aRegCli, tRegHabitacion *aRegHab, char aRegRes[Max_habitaciones][31][10],char *cDniCli,char *cCodHab){
 
     int diaRes = 0;
 
@@ -665,19 +665,24 @@ char **altaReserva(tRegCliente *aRegCli, tRegHabitacion *aRegHab, char **aRegRes
 
     while (getchar() != '\n');
 
-    printf("Introduzca dia a reservar:");
-    scanf("%i",&diaRes);
+    do{
+        printf("Introduzca dia a reservar:");
+        scanf("%i",&diaRes);
+    }while(diaRes < 1 || diaRes > 30);
 
     int posCli = buscarCliente(aRegCli,cDniCli);
     int posHab = buscarHabitacion(aRegHab,cCodHab);
 
     if(habitacionesReservadas(aRegCli,aRegHab,posHab) == false && posCli != -1 && posHab != -1){
-        strcpy(aRegRes[posHab][diaRes],aRegCli[posCli].dni);
+        strncpy(aRegRes[posHab][diaRes-1],aRegCli[posCli].dni,10);
     }
 
-    for(int i = 0; i < Max_habitaciones;i++){
-       for(int j = 0; j < 31;j++){
-            printf("%d",aRegRes[i][j]);
+    printf("\nEstado de reservas:\n");
+    for(int i = 0; i < Max_habitaciones; i++) {
+        for(int j = 0; j < 31; j++) {
+            if(aRegRes[i][j][0] != '\0') {
+                printf("Hab %d, día %i: %s\n", i,j+1, aRegRes[i][j]);
+            }
         }
     }
     return aRegRes;
@@ -698,10 +703,9 @@ tRegCliente *asignarReserva(tRegCliente *aRegCli, tRegHabitacion *aRegHab,char *
     return aRegCli;
 }
 
-void listaGeneralReservas(tRegCliente *aRegCli, char **aRegRes){
+void listaGeneralReservas(tRegCliente *aRegCli, char aRegRes[Max_habitaciones][31][10]){
 
-    int iRecRegHab,iDiaRes,iRecRegCli,iRecRegHabCli;
-    char codCli[10];
+    int posCli = 0;
 
     printf("LISTADO GENERAL DE RESERVAS\n");
     barraSeparadora();
@@ -710,12 +714,20 @@ void listaGeneralReservas(tRegCliente *aRegCli, char **aRegRes){
     for(int i = 0;i < Max_habitaciones; i++){
         for(int j = 0; j < 31;j++){
             if(strlen(aRegRes[i][j]) > 0){
-               strcpy(codCli,aRegRes[i][j]);
+                posCli = buscarCliente(aRegCli,aRegRes[i][j]);
+
+                if(posCli != -1){
+                    for(int h = 0; h < 5;h++){
+                        if(strlen(aRegCli[posCli].rs_hab[h].cdHab) > 0){
+                            printf("%s\t%s\t%s",aRegCli[posCli].nom_apell,aRegCli[posCli].rs_hab[h].cdHab,aRegCli[posCli].rs_hab[h].tipo);
+                        }
+                    }
+                }
             }
         }
     }
 
-    for(int i = 0; i < Max_clientes;i++){
+    /*for(int i = 0; i < Max_clientes;i++){
         if(strcmp(aRegCli[i].dni,codCli) == 0){
             for(int j = 0; j < 5;j++){
                 if(strlen(aRegCli[i].rs_hab[j].cdHab) > 0){
@@ -723,7 +735,7 @@ void listaGeneralReservas(tRegCliente *aRegCli, char **aRegRes){
                 }
             }
         }
-    }
+    }*/
 }
 
 tRegHabitacion *importarNuevaHabitacionFichero(tRegHabitacion *aRegHab){
@@ -862,11 +874,12 @@ void main(){
 
     tRegCliente aRegCli[Max_clientes];
     tRegHabitacion aRegHab[Max_habitaciones];
-    char aRegRes[Max_habitaciones][31];
+    char aRegRes[Max_habitaciones][31][10];
 
     char cDniCli[10], cCodHab[10];
 
     memset(aRegCli,0,sizeof(aRegCli)); //Inicializa todos los elementos del array a 0 o cadena vacia
+    memset(aRegRes,0,sizeof(aRegRes));
 
     importarClientesFichero(aRegCli);
     importarHabitacionFichero(aRegHab);
@@ -986,8 +999,8 @@ void main(){
                             printf("Introduzca codigo de habitacion:");
                             scanf("%s",cCodHab);
 
-                            asignarReserva(aRegCli,aRegHab,cDniCli,cCodHab);
                             altaReserva(aRegCli,aRegHab,aRegRes,cDniCli,cCodHab);
+                            //asignarReserva(aRegCli,aRegHab,cDniCli,cCodHab);
 
                             break;
                         case 2: //cancelar reserva
