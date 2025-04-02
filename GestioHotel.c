@@ -16,7 +16,6 @@ Fecha:<>
 
 const int Max_clientes = 100;
 const int Max_habitaciones = 50;
-int numHab = 0;
 
 typedef struct{
     char cdHab[9];
@@ -657,7 +656,7 @@ void listadoGeneralHabitacion(tRegHabitacion *aRegHab){
     printf("Total: %i habitaciones registradas.\n",totHabReg);
 }
 
-char *altaReserva(tRegCliente *aRegCli, tRegHabitacion *aRegHab, char aRegRes[Max_habitaciones][31][10],char *cDniCli,char *cCodHab){
+void altaReserva(tRegCliente *aRegCli, tRegHabitacion *aRegHab, char aRegRes[Max_habitaciones][31][10],char *cDniCli,char *cCodHab){
 
     int diaRes = 0;
 
@@ -673,19 +672,9 @@ char *altaReserva(tRegCliente *aRegCli, tRegHabitacion *aRegHab, char aRegRes[Ma
     int posCli = buscarCliente(aRegCli,cDniCli);
     int posHab = buscarHabitacion(aRegHab,cCodHab);
 
-    if(habitacionesReservadas(aRegCli,aRegHab,posHab) == false && posCli != -1 && posHab != -1){
-        strncpy(aRegRes[posHab][diaRes-1],aRegCli[posCli].dni,10);
+    if(habitacionesReservadas(aRegCli,aRegHab,posHab) == false && aRegRes[posHab][diaRes - 1][0] == '\0' && posCli != -1 && posHab != -1){
+        strcpy(aRegRes[posHab][diaRes-1],aRegCli[posCli].dni);
     }
-
-    printf("\nEstado de reservas:\n");
-    for(int i = 0; i < Max_habitaciones; i++) {
-        for(int j = 0; j < 31; j++) {
-            if(aRegRes[i][j][0] != '\0') {
-                printf("Hab %d, día %i: %s\n", i,j+1, aRegRes[i][j]);
-            }
-        }
-    }
-    return aRegRes;
 }
 
 tRegCliente *asignarReserva(tRegCliente *aRegCli, tRegHabitacion *aRegHab,char *cDniCli,char *cCodHab){
@@ -705,7 +694,15 @@ tRegCliente *asignarReserva(tRegCliente *aRegCli, tRegHabitacion *aRegHab,char *
 
 void listaGeneralReservas(tRegCliente *aRegCli, char aRegRes[Max_habitaciones][31][10]){
 
-    int posCli = 0;
+    printf("\nEstado de reservas:\n");
+    for(int i = 0; i < Max_habitaciones; i++) {
+        for(int j = 0; j < 31; j++) {
+            if(aRegRes[i][j][0] != '\0') {
+                printf("Hab %d, día %i: %s\n", i,j+1, aRegRes[i][j]);
+            }
+        }
+    }
+    /*int posCli = 0;
 
     printf("LISTADO GENERAL DE RESERVAS\n");
     barraSeparadora();
@@ -725,7 +722,7 @@ void listaGeneralReservas(tRegCliente *aRegCli, char aRegRes[Max_habitaciones][3
                 }
             }
         }
-    }
+    }*/
 
     /*for(int i = 0; i < Max_clientes;i++){
         if(strcmp(aRegCli[i].dni,codCli) == 0){
@@ -1000,7 +997,7 @@ void main(){
                             scanf("%s",cCodHab);
 
                             altaReserva(aRegCli,aRegHab,aRegRes,cDniCli,cCodHab);
-                            //asignarReserva(aRegCli,aRegHab,cDniCli,cCodHab);
+                            asignarReserva(aRegCli,aRegHab,cDniCli,cCodHab);
 
                             break;
                         case 2: //cancelar reserva
